@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { ReactComponent as ArrowRightIcon } from '../assets/svg/keyboardArrowRightIcon.svg';
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from 'firebase/auth';
+import { db } from '../firebase.config';
+import { setDoc, doc, serverTimestamp } from 'firebase/firestore';
 import visibilityIcon from '../assets/svg/visibilityIcon.svg';
 
 const SignUp = () => {
@@ -22,6 +30,32 @@ const SignUp = () => {
     }));
   };
 
+  const onSubmit = async e => {
+    e.preventDefault();
+    try {
+      const auth = getAuth();
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+      updateProfile(auth.currentUser, {
+        displayName: name,
+      });
+
+      const formDataCopy = { ...formData };
+      delete formDataCopy.password;
+      formDataCopy.timestamp = serverTimestamp();
+
+      await setDoc(doc(db, 'users', user.uid), formDataCopy);
+
+      navigate('/');
+    } catch (error) {
+      toast.error('Erro Durante Autenticação');
+    }
+  };
+
   return (
     <>
       <div className="pageContainer">
@@ -30,7 +64,7 @@ const SignUp = () => {
             Criar uma <br /> conta
           </p>
         </header>
-        <form>
+        <form onSubmit={onSubmit}>
           <input
             type="text"
             className="nameInput"
