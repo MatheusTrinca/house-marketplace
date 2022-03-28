@@ -92,6 +92,7 @@ const CreateListing = () => {
         `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${process.env.REACT_APP_GEOCODE_API}`
       );
       const data = await response.json();
+
       geolocation.lat = data.results[0]?.geometry.location.lat ?? 0;
       geolocation.lng = data.results[0]?.geometry.location.lng ?? 0;
       location =
@@ -106,15 +107,16 @@ const CreateListing = () => {
     } else {
       geolocation.lat = latitude;
       geolocation.lng = longitude;
-      location = address;
     }
 
+    // Store image in firebase
     const storeImage = async image => {
       return new Promise((resolve, reject) => {
         const storage = getStorage();
         const fileName = `${auth.currentUser.uid}-${image.name}-${uuidv4()}`;
 
-        const storageRef = ref(storage, '/images/' + fileName);
+        const storageRef = ref(storage, 'images/' + fileName);
+
         const uploadTask = uploadBytesResumable(storageRef, image);
 
         uploadTask.on(
@@ -131,7 +133,7 @@ const CreateListing = () => {
                 console.log('Upload is running');
                 break;
               default:
-                return;
+                break;
             }
           },
           error => {
@@ -150,7 +152,7 @@ const CreateListing = () => {
       [...images].map(image => storeImage(image))
     ).catch(() => {
       setLoading(false);
-      toast.error('Imagens não carregadas');
+      toast.error('Imagens não salvas.');
       return;
     });
 
@@ -160,15 +162,19 @@ const CreateListing = () => {
       geolocation,
       timestamp: serverTimestamp(),
     };
-    delete formDataCopy.address;
+
+    formDataCopy.location = address;
     delete formDataCopy.images;
-    location && (formDataCopy.location = location);
+    delete formDataCopy.address;
+    location && (formDataCopy.location = address);
     !formDataCopy.offer && delete formDataCopy.discountedPrice;
 
     const docRef = await addDoc(collection(db, 'listings'), formDataCopy);
     setLoading(false);
     toast.success('Anúncio salvo.');
     navigate(`/category/${formDataCopy.type}/${docRef.id}`);
+
+    setLoading(false);
   };
 
   const onMutate = e => {
