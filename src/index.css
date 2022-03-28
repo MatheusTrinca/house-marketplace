@@ -720,6 +720,10 @@ button {
   display: flex;
 }
 
+.formRooms {
+  width: 80%;
+}
+
 .formButton,
 .formInput,
 .formInputAddress,
