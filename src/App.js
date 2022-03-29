@@ -12,6 +12,7 @@ import PrivateRoute from './components/PrivateRoute';
 import Category from './pages/Category';
 import CreateListing from './pages/CreateListing';
 import Listing from './pages/Listing';
+import Contact from './pages/Contact';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             path="/category/:categoryName/:listingId"
             element={<Listing />}
           />
+          <Route path="/contact/:landlordId" element={<Contact />} />
         </Routes>
         <Navbar />
       </Router>
@@ -44,4 +46,4 @@ export default App;
 
 // https://icons8.com.br
 
-// 102. 05:20 - Adicionar Listings
+// 106. 06:25 -
