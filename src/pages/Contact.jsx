@@ -26,7 +26,45 @@ const Contact = () => {
     getLandlord();
   }, [params.landlordId]);
 
-  return <div>Contact</div>;
+  const onChange = e => setMessage(e.target.value);
+
+  return (
+    <div className="pageContainer">
+      <header>
+        <p className="pageHeader">Contate o Anunciante</p>
+      </header>
+      {landlord !== null && (
+        <main>
+          <div className="contactLandlord">
+            <p className="landlordName">Contato: {landlord.name}</p>
+          </div>
+          <form className="messageForm">
+            <div className="messageDiv">
+              <label htmlFor="message" className="messageLabel">
+                Mensagem:
+              </label>
+              <textarea
+                className="textarea"
+                name="message"
+                id="message"
+                value={message}
+                onChange={onChange}
+              ></textarea>
+            </div>
+            <a
+              href={`mailto:${landlord.email}?Subject=${searchParams.get(
+                'listingName'
+              )}&body=${message}`}
+            >
+              <button type="button" className="primaryButton">
+                Enviar Mensagem
+              </button>
+            </a>
+          </form>
+        </main>
+      )}
+    </div>
+  );
 };
 
 export default Contact;
