@@ -6,6 +6,7 @@ import {
   where,
   orderBy,
   limit,
+  startAfter,
 } from 'firebase/firestore';
 import { db } from '../firebase.config';
 import { toast } from 'react-toastify';
@@ -15,6 +16,7 @@ import ListingItem from '../components/ListingItem';
 const Offers = () => {
   const [listings, setListings] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastFetchedListing, setLastFetchedListing] = useState();
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -32,6 +34,9 @@ const Offers = () => {
 
         // Execute query
         const querySnap = await getDocs(q);
+
+        const lastVisible = querySnap.docs[querySnap.docs.length - 1];
+        setLastFetchedListing(lastVisible);
 
         const listingsArr = [];
 
@@ -51,6 +56,42 @@ const Offers = () => {
 
     fetchListings();
   }, []);
+
+  const onfetchMoreListings = async () => {
+    try {
+      // Get Reference
+      const listingsRef = collection(db, 'listings');
+
+      // Create query
+      const q = query(
+        listingsRef,
+        where('offer', '==', true),
+        orderBy('timestamp', 'desc'),
+        startAfter(lastFetchedListing),
+        limit(10)
+      );
+
+      // Execute query
+      const querySnap = await getDocs(q);
+
+      const lastVisible = querySnap.docs[querySnap.docs.length - 1];
+      setLastFetchedListing(lastVisible);
+
+      const listingsArr = [];
+
+      querySnap.forEach(doc =>
+        listingsArr.push({
+          id: doc.id,
+          data: doc.data(),
+        })
+      );
+
+      setListings(prevState => [...prevState, ...listingsArr]);
+      setLoading(false);
+    } catch (error) {
+      toast.error('Algo deu errado');
+    }
+  };
 
   return (
     <div className="category">
@@ -73,6 +114,13 @@ const Offers = () => {
               ))}
             </ul>
           </main>
+          <br />
+          <br />
+          {lastFetchedListing && (
+            <p className="loadMore" onClick={onfetchMoreListings}>
+              Carregar Mais
+            </p>
+          )}
         </>
       ) : (
         <p>Não existem ofertas atualmente.</p>

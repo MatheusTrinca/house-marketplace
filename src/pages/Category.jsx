@@ -7,6 +7,7 @@ import {
   where,
   orderBy,
   limit,
+  startAfter,
 } from 'firebase/firestore';
 import { db } from '../firebase.config';
 import { toast } from 'react-toastify';
@@ -15,6 +16,7 @@ import ListingItem from '../components/ListingItem';
 
 const Category = () => {
   const [listings, setListings] = useState(null);
+  const [lastFetchedListing, setLastFetchedListing] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const params = useParams();
@@ -36,6 +38,9 @@ const Category = () => {
         // Execute query
         const querySnap = await getDocs(q);
 
+        const lastVisible = querySnap.docs[querySnap.docs.length - 1];
+        setLastFetchedListing(lastVisible);
+
         const listingsArr = [];
 
         querySnap.forEach(doc =>
@@ -54,6 +59,42 @@ const Category = () => {
 
     fetchListings();
   }, [params.categoryName]);
+
+  const onfetchMoreListings = async () => {
+    try {
+      // Get Reference
+      const listingsRef = collection(db, 'listings');
+
+      // Create query
+      const q = query(
+        listingsRef,
+        where('type', '==', params.categoryName),
+        orderBy('timestamp', 'desc'),
+        startAfter(lastFetchedListing),
+        limit(10)
+      );
+
+      // Execute query
+      const querySnap = await getDocs(q);
+
+      const lastVisible = querySnap.docs[querySnap.docs.length - 1];
+      setLastFetchedListing(lastVisible);
+
+      const listingsArr = [];
+
+      querySnap.forEach(doc =>
+        listingsArr.push({
+          id: doc.id,
+          data: doc.data(),
+        })
+      );
+
+      setListings(prevState => [...prevState, ...listingsArr]);
+      setLoading(false);
+    } catch (error) {
+      toast.error('Algo deu errado');
+    }
+  };
 
   return (
     <div className="category">
@@ -78,6 +119,14 @@ const Category = () => {
               ))}
             </ul>
           </main>
+
+          <br />
+          <br />
+          {lastFetchedListing && (
+            <p className="loadMore" onClick={onfetchMoreListings}>
+              Carregar Mais
+            </p>
+          )}
         </>
       ) : (
         <p>
